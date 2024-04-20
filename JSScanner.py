@@ -1,18 +1,28 @@
-#import faster_than_requests as requests
 import concurrent.futures
 import requests
 from concurrent import futures
-#import requests as r 
-import re 
-import urllib3 
-import os
+import argparse
+import re
+import urllib3
 import colored
-from colored import stylize
 urllib3.disable_warnings()
-print(colored.fg("red"), 
+
+argparser = argparse.ArgumentParser(description='JSScanner developed by 0x240x23elu (changed by Ramonstro)')
+argparser.add_argument('--path', type=str, help='path for JS files.')
+argparser.add_argument('--regex', type=str, help='Path for regex file.')
+argparser.add_argument('--threads', type=int, help='Number of threads.')
+argparser.add_argument('--output', type=str, help='Output file.')
+args = argparser.parse_args()
+
+path = args.path
+reg = args.regex
+threads = args.threads
+output_file = args.output
+
+print(colored.fg("red"),
      "╔════════════════════════════════════════════════════════════════╗\n"
       "║                    Devlope By 0x240x23elu                      ║\n"
-      "║                                                                ║\n"
+      "║                     Changed by Ramonstro                       ║\n"
       "╚════════════════════════════════════════════════════════════════╝")
 print("╔════════════════════════════════════════════════════════════════╗\n"
       "║                                                                ║\n"
@@ -39,48 +49,40 @@ print("╔═══════════════════════�
       "║                                                                ║\n"
       "╚════════════════════════════════════════════════════════════════╝")
 
-path = input("Please Enter Any File: ") 
-reg = input("Path Of Regex/Patten File: ")
-list=[] 
+
+list = []
 file1 = open(path, 'r')
-Lines = file1.readlines() 
+Lines = file1.readlines()
 count = 0
 # Strips the newline character
-for line in Lines: 
+for line in Lines:
     ip = line.strip()
     print(colored.fg("white"), ip)
     try:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
             futures = [
                 executor.submit(
                     lambda: requests.get(ip))
             for _ in range(1)
-        ]
-            
+            ]
 
         results = [
             f.result().text
             for f in futures
         ]
 
-        
-        
         file2 = open(reg, 'r')
         Lines2 = file2.readlines()
-        for line2 in Lines2: 
+        for line2 in Lines2:
             regex = line2.strip()
-        #print(regex)
             matches = re.finditer(regex, str(results), re.MULTILINE)
             for matchNum, match in enumerate(matches, start=1):
-    
-                print (colored.fg("green") ,"Regex: ",regex)
-                print(colored.fg("red") , "Match {matchNum} was found at: {match}".format(matchNum = matchNum, start = match.start(), end = match.end(), match = match.group()), '\n')
-                f = open('out.txt.txt', 'a')
+                print(colored.fg("green"), "Regex: ", regex)
+                print(colored.fg("red"), "Match {matchNum} was found at: {match}".format(matchNum = matchNum, start = match.start(), end = match.end(), match = match.group()), '\n')
+                f = open(output_file, 'a')
                 L = [ip, '\n', "Regex: ", regex, '\n', "Match {matchNum} was found at : {match}".format(matchNum = matchNum, start = match.start(), end = match.end(), match = match.group()),'\n']
                 f.writelines(L)
                 f.close()
-           
-    except requests.exceptions.RequestException as e:
-        # A serious problem happened, like an SSLError or InvalidURL
-        print("Error: {}".format(e))    
 
+    except requests.exceptions.RequestException as e:
+        print("Error: {}".format(e))
